@@ -1,7 +1,7 @@
 package raygun4go
 
 import (
-	"net/http"
+	"github.com/valyala/fasthttp"
 	"os"
 	"time"
 )
@@ -111,21 +111,27 @@ type RequestData struct {
 
 // newRequestData parses all information from the request in the context to a
 // struct. The struct is empty if no request was set.
-func newRequestData(r *http.Request) RequestData {
-	if r == nil {
+func newRequestData(ctx *fasthttp.RequestCtx) RequestData {
+	if ctx == nil {
 		return RequestData{}
 	}
 
-	r.ParseForm()
+	var ipAddress string
+
+	if len(ctx.Request.Header.Peek("X-Forwarded-For")) != 0 {
+		ipAddress = string(ctx.Request.Header.Peek("X-Forwarded-For"))
+	} else {
+		ipAddress = ctx.RemoteAddr().String()
+	}
 
 	return RequestData{
-		HostName:    r.Host,
-		URL:         r.URL.String(),
-		HTTPMethod:  r.Method,
-		IPAddress:   r.RemoteAddr,
-		QueryString: arrayMapToStringMap(r.URL.Query()),
-		Form:        arrayMapToStringMap(r.PostForm),
-		Headers:     arrayMapToStringMap(r.Header),
+		HostName:    string(ctx.Host()),
+		URL:         ctx.URI().String(),
+		HTTPMethod:  string(ctx.Method()),
+		IPAddress:   ipAddress,
+		QueryString: map[string]string{"query": ctx.URI().QueryArgs().String()},
+		Form:        map[string]string{"post": string(ctx.PostBody())},
+		Headers:     map[string]string{"headers": ctx.Request.Header.String()},
 	}
 }
 

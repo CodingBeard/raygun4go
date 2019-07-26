@@ -42,6 +42,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/valyala/fasthttp"
 	"log"
 	"net/http"
 
@@ -63,7 +64,7 @@ type Client struct {
 // contextInformation holds optional information on the context the error
 // occured in.
 type contextInformation struct {
-	Request              *http.Request                // the request associated to the error
+	Request              *fasthttp.RequestCtx         // the request associated to the error
 	Version              string                       // the version of the package
 	Tags                 []string                     // tags that you would like to use to filter this error
 	CustomData           interface{}                  // whatever you like Raygun to know about this error
@@ -138,7 +139,7 @@ func (c *Client) Asynchronous(a bool) *Client {
 }
 
 // Request is a chainable option-setting method to add a request to the context.
-func (c *Client) Request(r *http.Request) *Client {
+func (c *Client) Request(r *fasthttp.RequestCtx) *Client {
 	c.context.Request = r
 	return c
 }
