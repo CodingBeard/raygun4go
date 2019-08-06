@@ -1,7 +1,6 @@
 package raygun4go
 
 import (
-	"github.com/valyala/fasthttp"
 	"os"
 	"time"
 )
@@ -51,7 +50,7 @@ func newDetailsData(c contextInformation, err error, stack StackTrace) DetailsDa
 		Error:          newErrorData(err, stack),
 		Tags:           c.Tags,
 		UserCustomData: c.CustomData,
-		Request:        newRequestData(c.Request),
+		Request:        c.Request,
 		User:           User{c.User},
 		Context:        Context{c.Identifier()},
 		Client:         ClientData{"raygun4go", packageVersion, "https://github.com/MindscapeHQ/raygun4go"},
@@ -107,32 +106,6 @@ type RequestData struct {
 	QueryString map[string]string `json:"queryString"` // key-value-pairs from the URI parameters
 	Form        map[string]string `json:"form"`        // key-value-pairs from a given form (POST)
 	Headers     map[string]string `json:"headers"`     // key-value-pairs from the header
-}
-
-// newRequestData parses all information from the request in the context to a
-// struct. The struct is empty if no request was set.
-func newRequestData(ctx *fasthttp.RequestCtx) RequestData {
-	if ctx == nil {
-		return RequestData{}
-	}
-
-	var ipAddress string
-
-	if len(ctx.Request.Header.Peek("X-Forwarded-For")) != 0 {
-		ipAddress = string(ctx.Request.Header.Peek("X-Forwarded-For"))
-	} else {
-		ipAddress = ctx.RemoteAddr().String()
-	}
-
-	return RequestData{
-		HostName:    string(ctx.Host()),
-		URL:         ctx.URI().String(),
-		HTTPMethod:  string(ctx.Method()),
-		IPAddress:   ipAddress,
-		QueryString: map[string]string{"query": ctx.URI().QueryArgs().String()},
-		Form:        map[string]string{"post": string(ctx.PostBody())},
-		Headers:     map[string]string{"headers": ctx.Request.Header.String()},
-	}
 }
 
 // clientData is the struct holding information on this client.
